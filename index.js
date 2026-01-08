@@ -13,7 +13,15 @@ const port = process.env.PORT || 5000;
 
 app.use(express.json({extended:true}));
 app.use(express.urlencoded({extended:true}));
-app.use(cors({credentials:true, origin: process.env.CLIENT_URL || "http://localhost:3000" || "https://fullstack-frontend-lego.netlify.app/"}));
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000').split(',').map(o => o.trim());
+app.use(cors({
+  credentials: true,
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true); // دعم requests بلا Origin (curl/servers)
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('CORS policy: origin not allowed'));
+  }
+}));
 app.use(upload());
 // Note: Vercel's filesystem is ephemeral. For persistent uploads use external storage (S3, Cloudinary, etc.).
 app.use('/uploads',express.static(__dirname +'/uploads'))
